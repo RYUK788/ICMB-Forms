@@ -1,8 +1,8 @@
 /* eslint-disable */
-// *****  IMPORTANT - // const currentUser = useSelector(state => state.user); to be uncomment before adding to prod/test.
-import React, { useEffect, useState } from 'react';
-// All local component imports have been removed.
 
+import React, { useEffect, useState } from 'react';
+import FormSubmitSection from './commons/FormSubmitSection';
+import DynamicTable from './Table';
 import {
   Button,
   Checkbox,
@@ -10,162 +10,22 @@ import {
   DatePicker,
   Divider,
   Form,
-  Input, // Added for TextArea and editable cells
   Row,
   Select,
   Spin,
   Tabs,
-  Table, // Added for the local DynamicTable
   Typography,
   notification,
 } from 'antd';
 import moment from 'moment';
-import {
-  LoadingOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  MailOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { fetchData } from '../api';
 import { useSelector } from 'react-redux';
-import dayjs from 'dayjs';
-
+import RefreshButton from './commons/RefreshButton';
 const { TabPane } = Tabs;
 const { Option } = Select;
 const { Title } = Typography;
-const { TextArea } = Input;
-
-// --- Start of Integrated Local Components ---
-
-/**
- * A local replacement for the DynamicTable component.
- * It renders an Ant Design Table with dynamically editable cells
- * based on the provided configuration and logic functions.
- */
-const LocalDynamicTable = ({
-  columnsConfig,
-  data,
-  onInputChange,
-  disabledLogic = () => false,
-  removeInput = () => false,
-}) => {
-  // Dynamically add a `render` function to editable columns
-  const processedColumns = columnsConfig.map(col => {
-    if (!col.editable) {
-      return col;
-    }
-
-    return {
-      ...col,
-      render: (text, record) => {
-        // Check if the input should be removed for this specific cell
-        if (removeInput(record.parameter, col.dataIndex)) {
-          return <span>{text}</span>; // Render text only, no input
-        }
-
-        // Check if the input should be disabled for this specific cell
-        const isDisabled = disabledLogic(record.parameter, col.dataIndex);
-
-        return (
-          <Input
-            value={text}
-            onChange={e =>
-              onInputChange(record.key, col.dataIndex, e.target.value)
-            }
-            disabled={isDisabled}
-          />
-        );
-      },
-    };
-  });
-
-  return (
-    <Table
-      bordered
-      dataSource={data}
-      columns={processedColumns}
-      pagination={false}
-      rowKey="key"
-    />
-  );
-};
-
-/**
- * A local replacement for the RefreshButton component.
- */
-const LocalRefreshButton = ({ handleRefresh }) => (
-  <Form.Item label=" ">
-    <Button
-      icon={<ReloadOutlined />}
-      onClick={handleRefresh}
-      style={{ marginTop: '2px' }}
-    >
-      Refresh
-    </Button>
-  </Form.Item>
-);
-
-/**
- * A local replacement for the FormSubmitSection component.
- */
-const LocalFormSubmitSection = ({
-  comment,
-  isFormValid,
-  handleCommentChange,
-  handleSaveClick,
-  initialSubject,
-  initialBody,
-  textBoxWidth = '540px',
-}) => {
-  const mailtoLink = `mailto:?subject=${encodeURIComponent(
-    initialSubject,
-  )}&body=${encodeURIComponent(initialBody)}`;
-
-  return (
-    <Row gutter={16} align="bottom">
-      <Col>
-        <Form.Item label="Comments">
-          <TextArea
-            rows={4}
-            value={comment}
-            onChange={handleCommentChange}
-            style={{ width: textBoxWidth }}
-            placeholder="Enter comments here..."
-          />
-        </Form.Item>
-      </Col>
-      <Col>
-        <Form.Item>
-          <Button
-            type="primary"
-            size="large"
-            disabled={!isFormValid}
-            style={{ backgroundColor: '#1C2444', color: '#ffffff' }}
-            onClick={handleSaveClick}
-          >
-            Save
-          </Button>
-        </Form.Item>
-      </Col>
-      <Col>
-        <Form.Item>
-          <a href={comment.trim() ? mailtoLink : undefined}>
-            <Button
-              type="default"
-              size="large"
-              icon={<MailOutlined />}
-              disabled={!comment.trim()}
-            >
-              Email Comment
-            </Button>
-          </a>
-        </Form.Item>
-      </Col>
-    </Row>
-  );
-};
-
-// --- End of Integrated Local Components ---
+import dayjs from 'dayjs';
 
 const selectStyle = {
   width: '100%',
@@ -283,7 +143,7 @@ export const CookShiftForm = () => {
 
     return defaultTimeColumns.map(column => ({
       ...column,
-      disabled: disabledFieldsConfig[section]?.[column.title] || false,
+      disabled: disabledFieldsConfig[section]?.[column.title] || false, // Check config
     }));
   };
 
@@ -318,7 +178,7 @@ export const CookShiftForm = () => {
           parameter.toLowerCase() === 'ph' &&
           (column === '10:30' || column === '2:30' || column === '6:30')
         )
-          return true;
+          return true; // Example: SLURRY - pH - 10:30 disabled
         if (
           parameter.toLowerCase() === 'density loop flush' &&
           (column === '10:30' ||
@@ -327,7 +187,7 @@ export const CookShiftForm = () => {
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // SLURRY - Solids - 12:30 disabled
         return false;
       },
       removeInput: (parameter, column) => {
@@ -359,12 +219,13 @@ export const CookShiftForm = () => {
           parameter.toLowerCase() === 'phic-2402' &&
           (column === '10:30' || column === '2:30' || column === '6:30')
         )
-          return true;
+          return true; // SLURRY - Solids - 12:30 disabled
+        // LIQ - pH - 2:30 disabled
         if (
           parameter.toLowerCase() === 'ph' &&
           (column === '10:30' || column === '2:30' || column === '6:30')
         )
-          return true;
+          return true; // SLURRY - Solids - 12:30 disabled
         if (
           parameter.toLowerCase() === 'density loop flush' &&
           (column === '10:30' ||
@@ -373,11 +234,12 @@ export const CookShiftForm = () => {
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // SLURRY - Solids - 12:30 disabled
 
         return false;
       },
       removeInput: (parameter, column) => {
+        // SLURRY - Solids - 12:30 disabled
         return false;
       },
     },
@@ -406,7 +268,7 @@ export const CookShiftForm = () => {
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // SLURRY - Solids - 12:30 disabled
         if (
           parameter.toLowerCase() === 'mzsa flushed' &&
           (column === '10:30' ||
@@ -414,11 +276,12 @@ export const CookShiftForm = () => {
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // SLURRY - Solids - 12:30 disabled
 
         return false;
       },
       removeInput: (parameter, column) => {
+        // SLURRY - Solids - 12:30 disabled
         return false;
       },
     },
@@ -436,10 +299,10 @@ export const CookShiftForm = () => {
       ],
       data: [
         {
-          key: '',
-          parameter: 'no',
-          target: '',
-          '8:30': '1A-39%',
+          key: '', // Blank key
+          parameter: 'no', // Blank parameter
+          target: '', // Blank target
+          '8:30': '1A-39%', // Time column data
           '10:30': '2B-48%',
           '12:30': '2A-56%',
           '2:30': '2B-34%',
@@ -449,10 +312,10 @@ export const CookShiftForm = () => {
         { key: '1', parameter: 'paddlescreen solids', target: '>184.0' },
         { key: '2', parameter: 'paddlescreen flushes', target: '>184.0' },
         {
-          key: '',
-          parameter: 'no2',
-          target: '',
-          '8:30': '1',
+          key: '', // Blank key
+          parameter: 'no2', // Blank parameter
+          target: '', // Blank target
+          '8:30': '1', // Time column data
           '10:30': '2',
           '12:30': '3',
           '2:30': '4',
@@ -493,6 +356,7 @@ export const CookShiftForm = () => {
         if (parameter.toLowerCase() === 'no2') {
           return true;
         }
+        // SLURRY - Solids - 12:30 disabled
         return false;
       },
     },
@@ -512,6 +376,7 @@ export const CookShiftForm = () => {
         { key: '1', parameter: '% caustic', target: '>32' },
         { key: '2', parameter: 'pH', target: '<8' },
         { key: '3', parameter: 'appearance', target: '<8' },
+
         { key: '4', parameter: 'CIP screen cleaned', target: '<8' },
       ],
       disabledLogic: (parameter, column) => {
@@ -522,22 +387,23 @@ export const CookShiftForm = () => {
           parameter.toLowerCase() === 'ph' &&
           (column === '4:30' || column === '2:30')
         )
-          return true;
+          return true; // Example: SLURRY - pH - 10:30 disabled
         if (
           parameter.toLowerCase() === '% caustic' &&
           (column === '4:30' || column === '2:30')
         )
-          return true;
+          return true; // Example: SLURRY - pH - 10:30 disabled
         if (
           parameter.toLowerCase() === 'appearance' &&
           (column === '4:30' || column === '2:30')
         )
-          return true;
+          return true; // Example: SLURRY - pH - 10:30 disabled
         if (
           parameter.toLowerCase() === 'cip screened cleaned' &&
           (column === '4:30' || column === '2:30')
         )
-          return true;
+          return true; // Example: SLURRY - pH - 10:30 disabled
+        // SLURRY - Solids - 12:30 disabled
         return false;
       },
     },
@@ -569,7 +435,8 @@ export const CookShiftForm = () => {
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // ABS - Level/Flow - 2:30 disabled
+        // ABS - Level/Flow - 2:30 disabled
         return false;
       },
       removeInput: (parameter, column) => {
@@ -582,13 +449,13 @@ export const CookShiftForm = () => {
         )
           return true;
         if (
-          parameter.toLowerCase() === 'check & clean j tubes' &&
+          parameter.toLowerCase() === 'check & clean J tubes' &&
           (column === '12:30' ||
             column === '2:30' ||
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // ABS - Level/Flow - 2:30 disabled
         if (
           parameter.toLowerCase() === 'slurry strainer' &&
           (column === '10:30' ||
@@ -597,7 +464,7 @@ export const CookShiftForm = () => {
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // ABS - Level/Flow - 2:30 disabled
         if (
           parameter.toLowerCase() === 'sump strainer' &&
           (column === '10:30' ||
@@ -606,7 +473,16 @@ export const CookShiftForm = () => {
             column === '4:30' ||
             column === '6:30')
         )
-          return true;
+          return true; // ABS - Level/Flow - 2:30 disabled
+        if (
+          parameter.toLowerCase() === 'sump strainer' &&
+          (column === '10:30' ||
+            column === '12:30' ||
+            column === '2:30' ||
+            column === '4:30' ||
+            column === '6:30')
+        )
+          return true; // ABS - Level/Flow - 2:30 disabled
         if (
           parameter.toLowerCase() === 'milling & bucket elevator' &&
           (column === '10:30' ||
@@ -621,22 +497,26 @@ export const CookShiftForm = () => {
     },
   ];
 
-  // const currentUser = useSelector(state => state.user);
-  const currentUser = { username: 'test-user' };  
+  const currentUser = useSelector(state => state.user);
   const [sections, setSections] = useState(defaultsections);
   const [previousData, setPreviousData] = useState(defaultsections);
   const [operatorList, setOperatorList] = useState([]);
   const [shiftList, setShiftList] = useState([]);
-  const [isFormValid, setIsFormValid] = useState(false);
-  const [comment, setComment] = useState('');
-
+  const [targetList, setTargetList] = useState([]);
   // Loading states
   const [isLoadingShifts, setIsLoadingShifts] = useState(false);
   const [isLoadingOperators, setIsLoadingOperators] = useState(false);
   const [isTableLoading, setIsTableLoading] = useState(false);
+  // General columns for time-based inputs
+  const [isFormValid, setIsFormValid] = useState(false); // State to track form validity
+  const [modifiedFields, setModifiedFields] = useState({});
+  // Comment in the submit section
+  const [comment, setComment] = useState('');
 
+  // for setting comments
   const handleCommentChange = e => {
     setComment(e.target.value);
+    console.log(e.target.value);
   };
 
   const resetTableData = () => {
@@ -645,31 +525,40 @@ export const CookShiftForm = () => {
 
   const validateForm = () => {
     const values = form.getFieldsValue();
+    // Check if all three fields have values
     const isValid = values.date && values.shift && values.operator;
     setIsFormValid(isValid);
   };
 
+  // Use Form's onValuesChange to validate fields in real time
   const handleFormChange = () => {
     validateForm();
   };
 
   const updateDefaultSections = apiData => {
+    // Initialize defaultSections structure
+
+    // Group API data by category
     const groupedData = apiData.reduce((acc, item) => {
       if (item.category) {
         if (!acc[item.category]) {
           acc[item.category] = [];
         }
         acc[item.category].push({
-          key: acc[item.category].length + 1,
+          key: acc[item.category].length + 1, // Assign a unique key based on the count
           parameter: item.parameter,
           target: item.value,
         });
       }
+
       return acc;
     }, {});
-
+    console.log('groupedData', groupedData);
     if (groupedData['FST']) {
+      // Extract dynamic target values from the grouped data
       const getDynamicValue = parameter => {
+        console.log('group data', groupedData);
+        console.log('dynamic parameter', parameter);
         const match = groupedData['FST'].find(
           item => item.parameter === parameter,
         );
@@ -677,10 +566,10 @@ export const CookShiftForm = () => {
       };
 
       groupedData['FST'].unshift({
-        key: 'fst_row_1',
-        parameter: 'no',
-        target: '',
-        '8:30': `1A-${getDynamicValue('1A')}`,
+        key: '', // Blank key
+        parameter: 'no', // Example placeholder parameter
+        target: '', // Blank target
+        '8:30': `1A-${getDynamicValue('1A')}`, // Use dynamic value for 1A
         '10:30': `2B-${getDynamicValue('2B')}`,
         '12:30': `2A-${getDynamicValue('2A')}`,
         '2:30': `2B-${getDynamicValue('2B')}`,
@@ -688,27 +577,40 @@ export const CookShiftForm = () => {
         '6:30': `3B-${getDynamicValue('3B')}`,
       });
       groupedData['FST'].splice(3, 0, {
-        key: 'fst_row_2',
-        parameter: 'no2',
-        target: '',
-        '8:30': `${getDynamicValue('1')}`,
+        key: '', // Blank key
+        parameter: 'no2', // Example placeholder parameter
+        target: '', // Blank target
+        '8:30': `${getDynamicValue('1')}`, // Use dynamic value for 1A
         '10:30': `${getDynamicValue('2')}`,
         '12:30': `${getDynamicValue('3')}`,
         '2:30': `${getDynamicValue('4')}`,
         '4:30': ``,
         '6:30': ``,
       });
-      const excludeParameters = ['1A', '1B', '2A', '2B', '3A', '3B', '1', '2', '3', '4'];
+      // const excludeParameters = ['1A', '1B', '2A', '2B', '3A', '3'];
+      const excludeParameters = [
+        '1A',
+        '1B',
+        '2A',
+        '2B',
+        '3A',
+        '3B',
+        '1',
+        '2',
+        '3',
+        '4',
+      ];
       groupedData['FST'] = groupedData['FST'].filter(
         item => !excludeParameters.includes(item.parameter),
       );
     }
-
+    // Iterate through the grouped data and match category titles in defaultSections
     return sections.map(section => {
       const categoryData = groupedData[section.title];
       const newTitle = Object.keys(groupedData).find(
         key => key.toLowerCase() === section.title.toLowerCase(),
       );
+      console.log('newTitle', newTitle);
       if (categoryData) {
         return {
           ...section,
@@ -722,6 +624,7 @@ export const CookShiftForm = () => {
 
   const resetTimeColumnsInSections = () => {
     const timeColumnKeys = generateTimeColumns('FST').map(col => col.dataIndex);
+
     setSections(prevSections =>
       prevSections.map(section => ({
         ...section,
@@ -729,7 +632,7 @@ export const CookShiftForm = () => {
           const updatedRow = { ...row };
           timeColumnKeys.forEach(key => {
             if (updatedRow.hasOwnProperty(key)) {
-              updatedRow[key] = '';
+              updatedRow[key] = ''; // Reset time column value to 0
             }
           });
           return updatedRow;
@@ -737,42 +640,58 @@ export const CookShiftForm = () => {
       })),
     );
   };
-
+  // Function to update sectionData based on query data
   const updateSectionData = queryData => {
     const updatedSectionData = sections.map(section => {
       const matchingData = queryData.filter(
         data => data.category.toLowerCase() === section.title.toLowerCase(),
       );
+
+      // Update the rows in the section based on the query data
       const updatedData = section.data.map(row => {
+        // Loop over the matching data and directly set the hour: entered_value
         let updatedRow = { ...row };
+
+        // Filter the matching data for the current row's parameter
         const matchedRows = matchingData.filter(
           data => data.parameter.toLowerCase() === row.parameter.toLowerCase(),
         );
+
+        // Iterate over the matched rows to create hour: entered_value
         matchedRows.forEach(matchedRow => {
           updatedRow[matchedRow.hour] = matchedRow.entered_value;
         });
+
         return updatedRow;
       });
+
       return { ...section, data: updatedData };
     });
     setSections(updatedSectionData);
     setPreviousData(updatedSectionData);
+
+    // setSectionData(updatedSectionData);
   };
 
-  const handleInputChange = (rowKey, column, value) => {
+  // Handle input changes
+  // Handler function to update data
+  const handleInputChange = (sectionTitle, rowKey, column, value) => {
+    // Update the data within the specified section
     const updatedSections = sections.map(section => {
-      const updatedData = section.data.map(item => {
-        if (item.key === rowKey) {
-          return { ...item, [column]: value };
-        }
-        return item;
-      });
-      return { ...section, data: updatedData };
+      if (section.title.toLowerCase() === sectionTitle.toLowerCase()) {
+        const updatedData = section.data.map(item => {
+          if (item.key === rowKey) {
+            return { ...item, [column]: value }; // Update specific field
+          }
+          return item;
+        });
+        return { ...section, data: updatedData };
+      }
+      return section;
     });
-    setSections(updatedSections);
+    setSections(updatedSections); // Update the state with new data
   };
 
-  // ... (All other functions like generateSQL, handleSubmit, etc., remain unchanged)
   const generateSQL = async (formData, currentData, previousData) => {
     const { date, shift, operator, walkThroughFirst, walkThroughLast } =
       formData;
@@ -804,13 +723,13 @@ export const CookShiftForm = () => {
           const previousValue = previousRow ? previousRow[time] : undefined;
 
           if (
-            (enteredValue && String(enteredValue).trim() !== '') ||
+            (enteredValue && enteredValue.trim() !== '') ||
             previousValue === null
           ) {
             if (previousValue === undefined) {
               // New value: Generate INSERT query
               const insertQuery = `INSERT INTO cooks (datetime, date, shift, operator, hour, category, parameter, target, entered_value, user) 
-                                              VALUES (NOW(), '${formattedDate}', '${shift}', '${operator}', '${time}', '${section.title}', '${parameter}', '${target}', '${enteredValue}', '${currentUser.username}');`;
+                                                 VALUES (NOW(), '${formattedDate}', '${shift}', '${operator}', '${time}', '${section.title}', '${parameter}', '${target}', '${enteredValue}', '${currentUser.username}');`;
 
               try {
                 const response = await fetchData(insertQuery);
@@ -842,6 +761,7 @@ export const CookShiftForm = () => {
               }
             } else if (enteredValue !== previousValue && previousValue !== '') {
               // Changed value: Generate UPDATE query
+              console.log('running update query', previousValue);
               const updateQuery = `UPDATE cooks SET entered_value = '${enteredValue}',user = '${currentUser.username}',datetime= NOW(),operator= '${operator}' WHERE date = '${formattedDate}' AND shift = '${shift}' AND hour = '${time}' AND category = '${section.title}' AND parameter = '${parameter}';`;
 
               try {
@@ -878,6 +798,28 @@ export const CookShiftForm = () => {
     }
     resetTableData();
     handleWalkthroughSubmit();
+    // if (walkThroughFirst && walkThroughFirst.length > 0) {
+    //     await insertWalkthroughData(
+    //         walkThroughFirst,
+    //         formattedDate,
+    //         shift,
+    //         'Cook',
+    //         currentUser,
+    //         '07:15:00',
+    //     );
+    // }
+
+    // // Handling walkThroughLast
+    // if (walkThroughLast && walkThroughLast.length > 0) {
+    //     await insertWalkthroughData(
+    //         walkThroughLast,
+    //         formattedDate,
+    //         shift,
+    //         'Cook',
+    //         currentUser,
+    //         '06:15:00',
+    //     );
+    // }
   };
 
   const handleWalkthroughSubmit = async () => {
@@ -899,9 +841,11 @@ export const CookShiftForm = () => {
     let anyApiFailure = false;
 
     try {
+      // Fetch existing walkthrough data for the date and shift
       const existingQuery = `SELECT * FROM walkthroughs WHERE date = '${formattedDate}' AND shift = '${selectedShift}'`;
       const existingData = await fetchData(existingQuery);
 
+      // Prepare walkthrough data to compare and insert/update
       const walkthroughData = [
         { hour: '07:15:00', data: walkThroughFirst },
         { hour: '06:15:00', data: walkThroughLast },
@@ -920,11 +864,14 @@ export const CookShiftForm = () => {
           value => value === 0,
         );
         if (allValuesZero) {
+          console.log(`Skipping hour ${hour} as all walkthrough values are 0.`);
           continue;
         }
+        // Check if there's an existing entry for this hour
         const existingEntry = existingData.find(entry => entry.hour === hour);
 
         if (existingEntry) {
+          // Compare current data with existing data
           const hasChanges =
             existingEntry.buckets !== walkthroughColumns.BUCKETS ||
             existingEntry.hoses !== walkthroughColumns.HOSES ||
@@ -933,16 +880,17 @@ export const CookShiftForm = () => {
             existingEntry.sample_ports !== walkthroughColumns.SAMPLE_PORTS;
 
           if (hasChanges) {
+            // Update query
             const updateQuery = `UPDATE walkthroughs 
-                                           SET buckets = ${walkthroughColumns.BUCKETS}, 
-                                               hoses = ${walkthroughColumns.HOSES}, 
-                                               doors = ${walkthroughColumns.DOORS}, 
-                                               trash = ${walkthroughColumns.TRASH}, 
-                                               sample_ports = ${walkthroughColumns.SAMPLE_PORTS}, 
-                                               user = '${currentUser.username}' 
-                                           WHERE date = '${formattedDate}' 
-                                           AND shift = '${selectedShift}' 
-                                           AND hour = '${hour}';`;
+                                             SET buckets = ${walkthroughColumns.BUCKETS}, 
+                                                 hoses = ${walkthroughColumns.HOSES}, 
+                                                 doors = ${walkthroughColumns.DOORS}, 
+                                                 trash = ${walkthroughColumns.TRASH}, 
+                                                 sample_ports = ${walkthroughColumns.SAMPLE_PORTS}, 
+                                                 user = '${currentUser.username}' 
+                                             WHERE date = '${formattedDate}' 
+                                             AND shift = '${selectedShift}' 
+                                             AND hour = '${hour}';`;
 
             const response = await fetchData(updateQuery);
 
@@ -966,15 +914,16 @@ export const CookShiftForm = () => {
             }
           }
         } else {
+          // Insert query for new data
           const insertQuery = `INSERT INTO walkthroughs 
-                                           (datetime, date, shift, hour, buckets, hoses, doors, trash, sample_ports, form_type, user) 
-                                           VALUES (NOW(), '${formattedDate}', '${selectedShift}', '${hour}', 
-                                                   ${walkthroughColumns.BUCKETS}, 
-                                                   ${walkthroughColumns.HOSES}, 
-                                                   ${walkthroughColumns.DOORS}, 
-                                                   ${walkthroughColumns.TRASH}, 
-                                                   ${walkthroughColumns.SAMPLE_PORTS}, 
-                                                   'Cook', '${currentUser.username}');`;
+                                         (datetime, date, shift, hour, buckets, hoses, doors, trash, sample_ports, form_type, user) 
+                                         VALUES (NOW(), '${formattedDate}', '${selectedShift}', '${hour}', 
+                                                 ${walkthroughColumns.BUCKETS}, 
+                                                 ${walkthroughColumns.HOSES}, 
+                                                 ${walkthroughColumns.DOORS}, 
+                                                 ${walkthroughColumns.TRASH}, 
+                                                 ${walkthroughColumns.SAMPLE_PORTS}, 
+                                                 'Cook', '${currentUser.username}');`;
 
           const response = await fetchData(insertQuery);
 
@@ -1011,6 +960,54 @@ export const CookShiftForm = () => {
     }
   };
 
+  const insertWalkthroughData = async (
+    walkThroughData,
+    formattedDate,
+    shift,
+    formType,
+    currentUser,
+    hour,
+  ) => {
+    const walkthroughColumns = {
+      BUCKETS: walkThroughData.includes('BUCKETS') ? 1 : 0,
+      HOSES: walkThroughData.includes('HOSES') ? 1 : 0,
+      DOORS: walkThroughData.includes('DOORS') ? 1 : 0,
+      TRASH: walkThroughData.includes('TRASH') ? 1 : 0,
+      SAMPLE_PORTS: walkThroughData.includes('SAMPLE PORTS') ? 1 : 0,
+    };
+
+    const walkthroughQuery = `INSERT INTO walkthroughs (datetime, date, shift, hour, buckets, hoses, doors, trash, sample_ports, form_type, user)VALUES (NOW(), '${formattedDate}', '${shift}', '${hour}', ${walkthroughColumns.BUCKETS}, ${walkthroughColumns.HOSES}, ${walkthroughColumns.DOORS}, ${walkthroughColumns.TRASH}, ${walkthroughColumns.SAMPLE_PORTS}, '${formType}', '${currentUser.username}');`;
+
+    try {
+      const response = await fetchData(walkthroughQuery);
+
+      if (
+        response.error ||
+        response['Query Run Status']?.startsWith('Query run failed')
+      ) {
+        notification.error({
+          message: `${formType} Saved Failed`,
+          description: response.error || response['Query Run Status'],
+          placement: 'topRight',
+        });
+      } else {
+        notification.success({
+          message: ` walkthrough Saved Successfully`,
+          description: `${formType} walkthrough data inserted successfully.`,
+          placement: 'topRight',
+        });
+        form.resetFields();
+      }
+    } catch (error) {
+      notification.error({
+        message: `${formType} Insert Error`,
+        description: error.message,
+        placement: 'topRight',
+      });
+    }
+  };
+
+  // submitting comment
   const submitComment = async () => {
     form.validateFields().then(async () => {
       const { formattedDate, shift, operator, user } = getFiledValues();
@@ -1050,7 +1047,7 @@ export const CookShiftForm = () => {
       if (comment.trim() !== '') {
         submitComment();
       }
-      await generateSQL(formData, sections, previousData);
+      const sqlQuery = generateSQL(formData, sections, previousData);
     });
   };
 
@@ -1066,26 +1063,51 @@ export const CookShiftForm = () => {
   const handleShift = async e => {
     const selectedDate = form.getFieldValue('date');
     if (!selectedDate) {
-      return;
+      return; // If no date is selected, return early
     }
+
+    // Format the selected date (moment handles it automatically)
     const formattedDate = moment(selectedDate).format('YYYY-MM-DD');
+    // setIsLoadingOperators(true);
+    // try {
+    //   // console.log('lead operator name', shiftList[e - 1].lead_operator_name);
+    //   // const name = shiftList[e - 1].lead_operator_name;
+    //   const operatorResult = await fetchData(
+    //     `select name,position from operators;`,
+    //   );
+    //   setOperatorList(operatorResult);
+    // } catch (error) {
+    //   notification.error({
+    //     message: 'Error Fetching Operators',
+    //     description: error.message,
+    //   });
+    // } finally {
+    //   setIsLoadingOperators(false);
+    // }
+    // if (!date) {
+    //   return; // If no date is selected, return early
+    // }
     resetTimeColumnsInSections();
+    setModifiedFields([]);
     fetchAndPopulateFieldData(formattedDate, e);
   };
 
   const fetchAndPopulateFieldData = async (formattedDate, e) => {
-    setIsTableLoading(true);
     try {
       const query = `SELECT * FROM cooks WHERE date = '${formattedDate}' and shift='${e}'`;
+      setIsTableLoading(true);
       const data = await fetchData(query);
+      // Assuming data contains the result of the query
       if (data && data.length > 0) {
         updateSectionData(data);
+        // setCooksData(data);
       } else {
         notification.info({
           message: 'No Data Found',
           description: `No records found for the selected date: ${formattedDate}`,
           placement: 'topRight',
         });
+        // setSections(defaultsections); //changed code
       }
     } catch (error) {
       notification.error({
@@ -1097,11 +1119,13 @@ export const CookShiftForm = () => {
       setIsTableLoading(false);
     }
     try {
+      // Fetch walkthrough data for the selected date and shift
       const walkthroughQuery = `SELECT * FROM walkthroughs WHERE date = '${formattedDate}' AND shift = '${e}'AND form_type='Cook';`;
       const walkthroughResult = await fetchData(walkthroughQuery);
 
       if (walkthroughResult && walkthroughResult.length > 0) {
         autoPopulateWalkthrough(walkthroughResult);
+      } else {
       }
     } catch (error) {
       notification.error({
@@ -1120,13 +1144,18 @@ export const CookShiftForm = () => {
 
   useEffect(() => {
     const fetchDataSequentially = async () => {
-      setIsLoadingShifts(true);
       try {
+        setIsLoadingShifts(true);
         const shiftResult = await fetchData('select * from shifts');
+        console.log('shift data', shiftResult); // added line for display of results
         setShiftList(shiftResult);
         const targetResult = await fetchData('select * from targets');
+        console.log('target result', targetResult);
         const updatedSections = updateDefaultSections(targetResult);
+        console.log('updated sections', updatedSections);
+        console.log('the previous data', sections);
         setSections(updatedSections);
+        console.log('the updated data', sections);
         setPreviousData(updatedSections);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -1134,13 +1163,15 @@ export const CookShiftForm = () => {
         setIsLoadingShifts(false);
       }
     };
-    validateForm();
+    validateForm(); // Initial validation
     fetchDataSequentially();
   }, []);
 
   const getOperatorList = async () => {
     setIsLoadingOperators(true);
     try {
+      // console.log('lead operator name', shiftList[e - 1].lead_operator_name);
+      // const name = shiftList[e - 1].lead_operator_name;
       const operatorResult = await fetchData(
         `select name,position from operators;`,
       );
@@ -1153,13 +1184,15 @@ export const CookShiftForm = () => {
     } finally {
       setIsLoadingOperators(false);
     }
+    if (!date) {
+      return; // If no date is selected, return early
+    }
   };
-
   useEffect(() => {
     getOperatorList();
   }, []);
-
   const autoPopulateWalkthrough = walkthroughData => {
+    // Map data into form fields for walkthroughs
     const walkThroughFirst = [];
     const walkThroughLast = [];
 
@@ -1179,6 +1212,7 @@ export const CookShiftForm = () => {
       }
     });
 
+    // Set form values for walkthroughs
     form.setFieldsValue({
       walkThroughFirst,
       walkThroughLast,
@@ -1200,7 +1234,11 @@ export const CookShiftForm = () => {
   };
 
   const getSubjectAndBodyForEmail = () => {
-    const { formattedDate, shift, operator } = getFiledValues();
+    // const date = form.getFieldValue('date');
+    // const formattedDate = moment(date)?.format('YYYY-MM-DD');
+    // const shift = form.getFieldValue('shift');
+    // const operator = form.getFieldValue('operator');
+    const { formattedDate, shift, operator, user } = getFiledValues();
     return {
       emailSubject: `Comment from batch ${formattedDate}_${shift}_${operator}`,
       emailBody: `Date: ${formattedDate}\nShift: ${shift}\nOperator: ${operator}\n\nComment: ${comment.trim()}`,
@@ -1221,18 +1259,21 @@ export const CookShiftForm = () => {
         style={{
           display: 'flex',
           flexDirection: 'column',
+          // overflow: 'scroll',
           alignItems: 'flex-start',
         }}
         onValuesChange={handleFormChange}
       >
+        {/* DatePicker with label */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-evenly',
             gap: '50px',
-            alignItems: 'flex-start',
           }}
         >
+          {/* <div> */}
+
           <Form.Item
             label=" Date"
             name="date"
@@ -1246,6 +1287,8 @@ export const CookShiftForm = () => {
             />
           </Form.Item>
 
+          {/* </div> */}
+          {/* Select 1 with label */}
           <Form.Item
             label="Lead Operator Name"
             name="shift"
@@ -1253,6 +1296,7 @@ export const CookShiftForm = () => {
           >
             <Select
               showSearch
+              // style={selectStyle}
               style={{ width: '160px' }}
               optionFilterProp="children"
               suffixIcon={<SearchOutlined />}
@@ -1270,6 +1314,7 @@ export const CookShiftForm = () => {
             </Select>
           </Form.Item>
 
+          {/* Select 2 with label */}
           <Form.Item
             label="Operator"
             name="operator"
@@ -1289,7 +1334,8 @@ export const CookShiftForm = () => {
               ))}
             </Select>
           </Form.Item>
-          <LocalRefreshButton handleRefresh={handleRefresh} />
+
+          <RefreshButton handleRefresh={handleRefresh} />
         </div>
         <Divider />
 
@@ -1301,16 +1347,19 @@ export const CookShiftForm = () => {
                   <div
                     className="form-table-title"
                     style={{
-                      pointerEvents: isFormValid ? 'auto' : 'none',
+                      pointerEvents: isFormValid ? 'auto' : 'none', // Disable interaction if form is invalid
                     }}
                   >
-                    <LocalDynamicTable
+                    <DynamicTable
                       columnsConfig={section.columns}
                       data={section.data}
+                      highlightRows={false}
                       disabledLogic={section.disabledLogic}
                       removeInput={section.removeInput}
+                      setModifiedFields={setModifiedFields}
+                      modifiedFields={modifiedFields}
                       onInputChange={(rowKey, column, value) =>
-                        handleInputChange(rowKey, column, value)
+                        handleInputChange(section.title, rowKey, column, value)
                       }
                     />
                     <br />
@@ -1356,7 +1405,7 @@ export const CookShiftForm = () => {
       </Form>
 
       <Row style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
-        <LocalFormSubmitSection
+        <FormSubmitSection
           form={form}
           comment={comment}
           isFormValid={isFormValid}
@@ -1366,9 +1415,17 @@ export const CookShiftForm = () => {
           initialBody={emailBody}
           textBoxWidth="540px"
         />
+        {/* <Button
+          type="primary"
+          size="large"
+          disabled={!isFormValid}
+          style={{ backgroundColor: '#1C2444', color: '#ffffff' }}
+          className="button-style"
+          onClick={() => handleSubmit()}
+        >
+          Save
+        </Button> */}
       </Row>
     </div>
   );
 };
-
-export default CookShiftForm;

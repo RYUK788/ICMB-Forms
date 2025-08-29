@@ -1,171 +1,30 @@
 /* eslint-disable */
 import React, { useEffect, useState } from 'react';
+import DynamicTable from './Table';
+import FormSubmitSection from './commons/FormSubmitSection';
 import dayjs from 'dayjs';
 
-// Imports for local components are removed.
-// We add Input, Table, and new icons here.
 import {
   Button,
   Checkbox,
   Col,
   DatePicker,
   Form,
-  Input, // Added
   Row,
   Select,
   Spin,
   Tabs,
-  Table, // Added
   notification,
   Typography,
 } from 'antd';
 import moment from 'moment';
-import {
-  LoadingOutlined,
-  SearchOutlined,
-  ReloadOutlined, // Added
-  MailOutlined,   // Added
-} from '@ant-design/icons';
+import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { fetchData } from '../api';
 import { useSelector } from 'react-redux';
-
+import RefreshButton from './commons/RefreshButton';
 const { TabPane } = Tabs;
 const { Option } = Select;
 const { Title } = Typography;
-const { TextArea } = Input;
-
-
-// --- Start of Integrated Local Components ---
-
-/**
- * A local replacement for the DynamicTable component.
- * It renders an Ant Design Table with dynamically editable cells.
- */
-const LocalDynamicTable = ({
-  columnsConfig,
-  data,
-  onInputChange,
-  disabledLogic = () => false,
-  removeInput = () => false,
-}) => {
-  // Dynamically add a `render` function to editable columns
-  const processedColumns = columnsConfig.map(col => {
-    if (!col.editable) {
-      return col;
-    }
-
-    return {
-      ...col,
-      render: (text, record) => {
-        // Check if the input should be removed for this specific cell
-        if (removeInput(record.parameter, col.dataIndex)) {
-          return <span>{text}</span>; // Render text only, no input
-        }
-
-        // Check if the input should be disabled for this specific cell
-        const isDisabled = disabledLogic(record.parameter, col.dataIndex);
-
-        return (
-          <Input
-            value={text}
-            onChange={e =>
-              onInputChange(record.key, col.dataIndex, e.target.value)
-            }
-            disabled={isDisabled}
-          />
-        );
-      },
-    };
-  });
-
-  return (
-    <Table
-      bordered
-      dataSource={data}
-      columns={processedColumns}
-      pagination={false}
-      rowKey="key"
-    />
-  );
-};
-
-/**
- * A local replacement for the RefreshButton component.
- */
-const LocalRefreshButton = ({ handleRefresh }) => (
-  <Form.Item label=" ">
-    <Button
-      icon={<ReloadOutlined />}
-      onClick={handleRefresh}
-      style={{ marginTop: '2px' }}
-    >
-      Refresh
-    </Button>
-  </Form.Item>
-);
-
-/**
- * A local replacement for the FormSubmitSection component.
- */
-const LocalFormSubmitSection = ({
-  comment,
-  isFormValid,
-  handleCommentChange,
-  handleSaveClick,
-  initialSubject,
-  initialBody,
-  textBoxWidth = '540px',
-}) => {
-  const mailtoLink = `mailto:?subject=${encodeURIComponent(
-    initialSubject,
-  )}&body=${encodeURIComponent(initialBody)}`;
-
-  return (
-    <Row gutter={16} align="bottom">
-      <Col>
-        <Form.Item label="Comments">
-          <TextArea
-            rows={4}
-            value={comment}
-            onChange={handleCommentChange}
-            style={{ width: textBoxWidth }}
-            placeholder="Enter comments here..."
-          />
-        </Form.Item>
-      </Col>
-      <Col>
-        <Form.Item>
-          <Button
-            type="primary"
-            size="large"
-            disabled={!isFormValid}
-            style={{ backgroundColor: '#1C2444', color: '#ffffff' }}
-            onClick={handleSaveClick}
-          >
-            Save
-          </Button>
-        </Form.Item>
-      </Col>
-      <Col>
-        <Form.Item>
-          <a href={comment.trim() ? mailtoLink : undefined}>
-            <Button
-              type="default"
-              size="large"
-              icon={<MailOutlined />}
-              disabled={!comment.trim()}
-            >
-              Email Comment
-            </Button>
-          </a>
-        </Form.Item>
-      </Col>
-    </Row>
-  );
-};
-
-// --- End of Integrated Local Components ---
-
 
 const selectStyle = {
   width: '100%',
@@ -451,6 +310,41 @@ export const DEForm = () => {
     },
     {
       title: 'CENT.',
+      // columns: [
+      //   {
+      //     title: <div className="table-title-column">Parameter</div>,
+      //     dataIndex: 'parameter',
+      //     key: 'parameter',
+      //     width: 200,
+      //   },
+      //   { title: 'Target', dataIndex: 'target', key: 'target', width: 100 },
+      //   // ...generateTimeColumns('CENT.'),
+      //   ...generateCentColumns('CENT.'),
+      // ],
+      // data: [
+      //   { key: '1', parameter: 'Hood Flush', target: '' },
+      //   { key: '2', parameter: 'Decanter Solids', target: '40' },
+      //   { key: '3', parameter: 'Centrate Solids', target: '40' },
+      //   { key: '4', parameter: 'Centrate HPLC', target: '40' },
+      // ],
+      // disabledLogic: (parameter, column) => {
+      //   return false;
+      // },
+      // removeInput: (parameter, column) => {
+      //   if (
+      //     parameter.toLowerCase() === 'centrate solids' &&
+      //     (column === '#3' || column === '#4')
+      //   ) {
+      //     return true;
+      //   }
+      //   if (
+      //     parameter.toLowerCase() === 'centrate hplc' &&
+      //     (column === '#3' || column === '#4')
+      //   ) {
+      //     return true;
+      //   }
+      //   return false;
+      // },
       tabs: [
         {
           title: 'CENT2',
@@ -462,6 +356,7 @@ export const DEForm = () => {
               width: 200,
             },
             { title: 'Target', dataIndex: 'target', key: 'target', width: 100 },
+            // ...generateTimeColumns('CENT.'),
             ...generateCentColumns('CENT.'),
           ],
           data: [
@@ -499,6 +394,7 @@ export const DEForm = () => {
               width: 200,
             },
             { title: 'Target', dataIndex: 'target', key: 'target', width: 100 },
+            // ...generateTimeColumns('CENT.'),
             ...generateCentColumns('CENT.'),
           ],
           data: [
@@ -536,6 +432,7 @@ export const DEForm = () => {
               width: 200,
             },
             { title: 'Target', dataIndex: 'target', key: 'target', width: 100 },
+            // ...generateTimeColumns('CENT.'),
             ...generateCentColumns('CENT.'),
           ],
           data: [
@@ -679,7 +576,7 @@ export const DEForm = () => {
       ],
       disabledLogic: (parameter, column) => {
         // if (parameter.toLowerCase() === '200 proof tank' && column === '12:00')
-        //   return true; // ABS - Level/Flow - 2:00 disabled
+        //   return true; // ABS - Level/Flow - 2:00 disabled
         if (
           (parameter.toLowerCase() === '190 proof tank' ||
             parameter.toLowerCase() === '200 proof tank' ||
@@ -709,9 +606,7 @@ export const DEForm = () => {
     },
   ];
 
-  // const currentUser = useSelector(state => state.user);
-  // const currentUser = useSelector(state => state.user);
-const currentUser = { username: 'test-user' }; // Use this for testing
+  const currentUser = useSelector(state => state.user);
   const [sections, setSections] = useState(defaultsections);
   const [previousData, setPreviousData] = useState(defaultsections);
   const [operatorList, setOperatorList] = useState([]);
@@ -828,6 +723,63 @@ const currentUser = { username: 'test-user' }; // Use this for testing
 
       return { ...section, data: updatedData };
     });
+
+    // updatedSectionData = updatedSectionData.map(section => {
+    //   console.log('section in update section');
+    //   let updatedData = {};
+    //   if (section.title === 'CENT.') {
+    //     for (const obj of section.tabs) {
+    //       const matchedData = queryData.filter(
+    //         item => item.category.toLowerCase() === obj.title.toLowerCase(),
+    //       );
+    //       console.log('matchedData', matchedData);
+    //       updatedData = obj.data.map(row => {
+    //         let updatedRow = { ...row };
+    //         const matchedRows = matchedData.filter(
+    //           data =>
+    //             data.parameter.toLowerCase() === row.parameter.toLowerCase(),
+    //         );
+    //         console.log('matched rows', matchedRows);
+    //         matchedRows.forEach(matchedRow => {
+    //           updatedRow[matchedRow.hour] = matchedRow.entered_value;
+    //           console.log('matched hour', matchedRow.hour);
+    //           console.log('matched hour', matchedRow.entered_value);
+    //         });
+    //         console.log('updated row', updatedRow);
+    //         return updatedRow;
+    //       });
+    //       console.log('updated data', updatedData);
+
+    //       console.log('return data', {
+    //         ...section,
+    //         tabs: section.tabs.map(i => {
+    //           console.log('HI1');
+    //           if (obj.title.toLowerCase() === i.title.toLowerCase()) {
+    //             console.log('Hi');
+    //             console.log('Hi I', { ...i, data: updatedData });
+    //             return { ...i, data: updatedData };
+    //           }
+    //           console.log('The other data', i);
+    //           return i;
+    //         }),
+    //       });
+    //       return {
+    //         ...section,
+    //         tabs: section.tabs.map(i => {
+    //           console.log('HI1');
+    //           if (obj.title.toLowerCase() === i.title.toLowerCase()) {
+    //             console.log('Hi');
+    //             console.log('Hi I', { ...i, data: updatedData });
+    //             return { ...i, data: updatedData };
+    //           }
+    //           console.log('The other data', i);
+    //           return i;
+    //         }),
+    //       };
+    //     }
+    //   }
+    //   return section;
+    // });
 
     updatedSectionData = updatedSectionData.map(section => {
       if (section.title === 'CENT.' && section.tabs) {
@@ -1095,8 +1047,10 @@ const currentUser = { username: 'test-user' }; // Use this for testing
           if (enteredValue && enteredValue.trim() !== '') {
             if (previousValue === undefined) {
               // New value: Generate INSERT query
+              // const insertQuery = `INSERT INTO DE (datetime, date, shift, operator, hour, category, parameter, target, entered_value, user)
+              //                                    VALUES (NOW(), '${formattedDate}', '${shift}', '${operator}', '${time}', '${section.title}', '${parameter}', '${target}', '${enteredValue}', '${currentUser.username}');`;
               const insertQuery = `INSERT INTO DE (datetime, date, shift, operator, hour, category, parameter, target, entered_value, user) 
-                                             VALUES (NOW(), '${formattedDate}', '${shift}', '${operator}', '${time}', '${section.title}', '${parameter}', '${target}', '${enteredValue}', '${currentUser.username}');`;
+                                                 VALUES (NOW(), '${formattedDate}', '${shift}', '${operator}', '${time}', '${section.title}', '${parameter}', '${target}', '${enteredValue}', '${currentUser.username}');`;
 
               try {
                 const response = await fetchData(insertQuery);
@@ -1112,6 +1066,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
                 } else {
                   notification.success({
                     message: `Data Saved Successfully`,
+                    // description: `Data for ${parameter} at ${time} inserted successfully.`,
                     description: `Data for ${parameter} at ${time} inserted successfully.`,
                     placement: 'topRight',
                   });
@@ -1162,6 +1117,28 @@ const currentUser = { username: 'test-user' }; // Use this for testing
       }
     }
     handleWalkthroughSubmit();
+    // if (walkThroughFirst && walkThroughFirst.length > 0) {
+    //   await insertWalkthroughData(
+    //     walkThroughFirst,
+    //     formattedDate,
+    //     shift,
+    //     'DE ',
+    //     currentUser,
+    //     '07:15:00',
+    //   );
+    // }
+
+    // // Handling walkThroughLast
+    // if (walkThroughLast && walkThroughLast.length > 0) {
+    //   await insertWalkthroughData(
+    //     walkThroughLast,
+    //     formattedDate,
+    //     shift,
+    //     'DE ',
+    //     currentUser,
+    //     '06:15:00',
+    //   );
+    // }
   };
 
   const handleWalkthroughSubmit = async () => {
@@ -1224,15 +1201,15 @@ const currentUser = { username: 'test-user' }; // Use this for testing
           if (hasChanges) {
             // Update query
             const updateQuery = `UPDATE walkthroughs 
-                                           SET buckets = ${walkthroughColumns.BUCKETS}, 
-                                               hoses = ${walkthroughColumns.HOSES}, 
-                                               doors = ${walkthroughColumns.DOORS}, 
-                                               trash = ${walkthroughColumns.TRASH}, 
-                                               sample_ports = ${walkthroughColumns.SAMPLE_PORTS}, 
-                                               user = '${currentUser.username}' 
-                                           WHERE date = '${formattedDate}' 
-                                           AND shift = '${selectedShift}' 
-                                           AND hour = '${hour}';`;
+                                             SET buckets = ${walkthroughColumns.BUCKETS}, 
+                                                 hoses = ${walkthroughColumns.HOSES}, 
+                                                 doors = ${walkthroughColumns.DOORS}, 
+                                                 trash = ${walkthroughColumns.TRASH}, 
+                                                 sample_ports = ${walkthroughColumns.SAMPLE_PORTS}, 
+                                                 user = '${currentUser.username}' 
+                                             WHERE date = '${formattedDate}' 
+                                             AND shift = '${selectedShift}' 
+                                             AND hour = '${hour}';`;
 
             const response = await fetchData(updateQuery);
 
@@ -1258,14 +1235,14 @@ const currentUser = { username: 'test-user' }; // Use this for testing
         } else {
           // Insert query for new data
           const insertQuery = `INSERT INTO walkthroughs 
-                                           (datetime, date, shift, hour, buckets, hoses, doors, trash, sample_ports, form_type, user) 
-                                           VALUES (NOW(), '${formattedDate}', '${selectedShift}', '${hour}', 
-                                                   ${walkthroughColumns.BUCKETS}, 
-                                                   ${walkthroughColumns.HOSES}, 
-                                                   ${walkthroughColumns.DOORS}, 
-                                                   ${walkthroughColumns.TRASH}, 
-                                                   ${walkthroughColumns.SAMPLE_PORTS}, 
-                                                   'DE', '${currentUser.username}');`;
+                                         (datetime, date, shift, hour, buckets, hoses, doors, trash, sample_ports, form_type, user) 
+                                         VALUES (NOW(), '${formattedDate}', '${selectedShift}', '${hour}', 
+                                                 ${walkthroughColumns.BUCKETS}, 
+                                                 ${walkthroughColumns.HOSES}, 
+                                                 ${walkthroughColumns.DOORS}, 
+                                                 ${walkthroughColumns.TRASH}, 
+                                                 ${walkthroughColumns.SAMPLE_PORTS}, 
+                                                 'DE', '${currentUser.username}');`;
 
           const response = await fetchData(insertQuery);
 
@@ -1409,7 +1386,26 @@ const currentUser = { username: 'test-user' }; // Use this for testing
       return; // If no date is selected, return early
     }
 
+    // Format the selected date (moment handles it automatically)
     const formattedDate = moment(selectedDate).format('YYYY-MM-DD');
+    // setIsLoadingOperators(true);
+    // try {
+    //   const operatorResult = await fetchData(
+    //     // `select name,position from operators where active_flag='1' and shift='${e}';`,
+    //     `select name,position from operators;`,
+    //   );
+    //   setOperatorList(operatorResult);
+    // } catch (error) {
+    //   notification.error({
+    //     message: 'Error Fetching Operators',
+    //     description: error.message,
+    //   });
+    // } finally {
+    //   setIsLoadingOperators(false);
+    // }
+    // if (!date) {
+    //   return; // If no date is selected, return early
+    // }
     resetTimeColumnsInSections();
     setModifiedFields([]);
     fetchAndPopulateFieldData(formattedDate, e);
@@ -1422,10 +1418,18 @@ const currentUser = { username: 'test-user' }; // Use this for testing
       setIsTableLoading(true);
 
       const data = await fetchData(query);
+      // Assuming data contains the result of the query
       if (data && data.length > 0) {
+        //make changes here for CENT tab , addition of tabs in frontend sections from backend section
+        //tabs are differently stored in database havs to set them as data in default section
+        // 12-2-2025
         console.log('Hello');
+
         console.log('data received from backend', data);
+
         updateSectionData(data);
+
+        // setCooksData(data);
       } else {
         notification.info({
           message: 'No Data Found',
@@ -1443,6 +1447,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
       setIsTableLoading(false);
     }
     try {
+      // Fetch walkthrough data for the selected date and shift
       const walkthroughQuery = `SELECT * FROM walkthroughs WHERE date = '${formattedDate}' AND shift = '${e}' AND form_type='DE';`;
       const walkthroughResult = await fetchData(walkthroughQuery);
 
@@ -1470,8 +1475,10 @@ const currentUser = { username: 'test-user' }; // Use this for testing
       try {
         setIsLoadingShifts(true);
 
+        // const shiftResult = await fetchData('select * from shifts');// created new shifts table with lead operator name
         const shiftResult = await fetchData('select * from shifts');
         setShiftList(shiftResult);
+        // const targetResult = await fetchData('select * from DE_targets'); //created new shofts table with lead operator name
         const targetResult = await fetchData('select * from DE_targets');
         const updatedSections = updateDefaultSections(targetResult);
         console.log('updatedSections', updatedSections);
@@ -1491,6 +1498,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
     setIsLoadingOperators(true);
     try {
       const operatorResult = await fetchData(
+        // `select name,position from operators where active_flag='1' and shift='${e}';`,
         `select name,position from operators;`,
       );
       setOperatorList(operatorResult);
@@ -1502,16 +1510,16 @@ const currentUser = { username: 'test-user' }; // Use this for testing
     } finally {
       setIsLoadingOperators(false);
     }
-    //This was causing a bug, date is not defined
-    // if (!date) {
-    //   return; // If no date is selected, return early
-    // }
+    if (!date) {
+      return; // If no date is selected, return early
+    }
   };
   useEffect(() => {
     getOperatorList();
   }, []);
 
   const autoPopulateWalkthrough = walkthroughData => {
+    // Map data into form fields for walkthroughs
     const walkThroughFirst = [];
     const walkThroughLast = [];
 
@@ -1531,6 +1539,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
       }
     });
 
+    // Set form values for walkthroughs
     form.setFieldsValue({
       walkThroughFirst,
       walkThroughLast,
@@ -1552,6 +1561,10 @@ const currentUser = { username: 'test-user' }; // Use this for testing
   };
 
   const getSubjectAndBodyForEmail = () => {
+    // const date = form.getFieldValue('date');
+    // const formattedDate = moment(date)?.format('YYYY-MM-DD');
+    // const shift = form.getFieldValue('shift');
+    // const operator = form.getFieldValue('operator');
     const { formattedDate, shift, operator, user } = getFiledValues();
     return {
       emailSubject: `Comment from batch ${formattedDate}_${shift}_${operator}`,
@@ -1572,11 +1585,13 @@ const currentUser = { username: 'test-user' }; // Use this for testing
         style={{
           display: 'flex',
           flexDirection: 'column',
+          // overflow: 'scroll',
           alignItems: 'flex-start',
         }}
         onValuesChange={handleFormChange}
         onError={e => console.log('error info', e)}
       >
+        {/* DatePicker with label */}
         <div
           style={{
             display: 'flex',
@@ -1597,6 +1612,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
             />
           </Form.Item>
 
+          {/* Select 1 with label */}
           <Form.Item
             label="Lead Operator Name"
             name="shift"
@@ -1621,6 +1637,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
             </Select>
           </Form.Item>
 
+          {/* Select 2 with label */}
           <Form.Item
             label="Operator"
             name="operator"
@@ -1641,7 +1658,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
             </Select>
           </Form.Item>
 
-          <LocalRefreshButton handleRefresh={handleRefresh} />
+          <RefreshButton handleRefresh={handleRefresh} />
         </div>
 
         <div>
@@ -1652,14 +1669,14 @@ const currentUser = { username: 'test-user' }; // Use this for testing
                   <div
                     className="form-table-title"
                     style={{
-                      pointerEvents: isFormValid ? 'auto' : 'none',
+                      pointerEvents: isFormValid ? 'auto' : 'none', // Disable interaction if form is invalid
                     }}
                   >
                     {section.title === 'CENT.' ? (
                       <Tabs type="card">
                         {section.tabs.map(sec => (
                           <TabPane tab={sec.title} key={sec.title}>
-                            <LocalDynamicTable
+                            <DynamicTable
                               columnsConfig={sec.columns}
                               data={sec.data}
                               highlightRows={false}
@@ -1686,7 +1703,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
                         ))}
                       </Tabs>
                     ) : (
-                      <LocalDynamicTable
+                      <DynamicTable
                         columnsConfig={section.columns}
                         data={section.data}
                         highlightRows={false}
@@ -1704,6 +1721,18 @@ const currentUser = { username: 'test-user' }; // Use this for testing
                         }
                       />
                     )}
+                    {/* <DynamicTable
+                      columnsConfig={section.columns}
+                      data={section.data}
+                      highlightRows={false}
+                      disabledLogic={section.disabledLogic}
+                      removeInput={section.removeInput}
+                      setModifiedFields={setModifiedFields}
+                      modifiedFields={modifiedFields}
+                      onInputChange={(rowKey, column, value) =>
+                        handleInputChange(section.title, rowKey, column, value)
+                      }
+                    /> */}
                     <br />
                   </div>
                 </Spin>
@@ -1747,7 +1776,7 @@ const currentUser = { username: 'test-user' }; // Use this for testing
       </Form>
 
       <Row style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
-        <LocalFormSubmitSection
+        <FormSubmitSection
           form={form}
           comment={comment}
           isFormValid={isFormValid}
@@ -1757,6 +1786,16 @@ const currentUser = { username: 'test-user' }; // Use this for testing
           initialBody={emailBody}
           textBoxWidth="540px"
         />
+        {/* <Button
+          type="primary"
+          size="large"
+          disabled={!isFormValid}
+          style={{ backgroundColor: '#1C2444', color: '#ffffff' }}
+          className="button-style"
+          onClick={() => handleSubmit()}
+        >
+          Save
+        </Button> */}
       </Row>
     </div>
   );
