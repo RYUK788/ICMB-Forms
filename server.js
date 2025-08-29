@@ -3,11 +3,12 @@ import cors from 'cors';
 import mysql from 'mysql2/promise';
 
 const app = express();
-const port = 3005;
+const port = 3005; // Use your working port
 
 app.use(cors());
 app.use(express.json());
 
+// --- Database Configuration ---
 const dbConfig = {
   host: 'localhost',
   user: 'golgix',
@@ -18,24 +19,32 @@ const dbConfig = {
   queueLimit: 0
 };
 
+// --- Create the connection pool ---
 const pool = mysql.createPool(dbConfig);
 console.log("✅ Database connection pool created successfully.");
 
-// The route that handles GET requests to /api/batches
-app.get('/api/batches', async (req, res) => {
+// --- ⚠️ GENERIC/INSECURE ROUTE ---
+// This endpoint accepts and runs any query from the client.
+app.post('/api/query', async (req, res) => {
+  const { query } = req.body;
+
+  if (!query) {
+    return res.status(400).json({ error: 'Query is required' });
+  }
+
   try {
-    console.log('[Server] Received request for /api/batches');
-    const [rows] = await pool.execute('SELECT DISTINCT batch_number FROM golgixportal.fermentation_data WHERE batch_number IS NOT NULL AND batch_number != ""');
-    console.log(`[Server] Found ${rows.length} batches. Sending response.`);
+    const [rows] = await pool.execute(query);
     res.json(rows);
   } catch (error) {
-    console.error('[Server] ❌ An error occurred:', error);
+    console.error('Error executing generic query:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+// --- Keep-Alive Function ---
 setInterval(() => {}, 600000);
 
+// --- Start Server ---
 app.listen(port, () => {
   console.log(`✅ Server is running and listening on http://localhost:${port}`);
 });

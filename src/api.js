@@ -9,15 +9,15 @@ const API_URL = 'http://localhost:3005/api';
  * ✅ NEW SECURE FUNCTION
  * This function calls the secure `/api/batches` endpoint.
  */
-export const fetchBatchNumbers = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/batches`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching batch numbers:', error);
-    throw error;
-  }
-};
+// export const fetchBatchNumbers = async () => {
+//   try {
+//     const response = await axios.get(`${API_URL}/batches`);
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching batch numbers:', error);
+//     throw error;
+//   }
+// };
 
 /**
  * ⚠️ OLD INSECURE FUNCTION
